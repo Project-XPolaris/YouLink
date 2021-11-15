@@ -1,0 +1,25 @@
+addr: ':4700'
+application: "YouLinkCoreService"
+instance: "main"
+datasource: "sqlite"
+service:
+  name: "YouLinkCoreService"
+  display: "YouLink Core Service"
+sqlite:
+  path: './database.db'
+youplus:
+  auth: false
+  enablepath: false
+  url: 'http://localhost:8999'
+  rpc: 'localhost:50055'
+  entity:
+    enable: false
+    name: "youlinkcore"
+    version: 1
+log:
+  youlog:
+    application: "YouLink Core Service"
+    instance: "main"
+    addr: "localhost:50052"
+    retry: 3000
+    remote: false
