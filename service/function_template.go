@@ -39,7 +39,7 @@ func (t *BaseFunctionTemplate) GetInputVariableDefinition() []*VariableDefinitio
 	return definitions
 }
 
-func ParseFunctionTemplate(funcs []*BaseFunctionTemplate) error {
+func ParseFunctionTemplate(funcs []*BaseFunctionTemplate, serviceContext *ServiceContext) error {
 	for _, template := range funcs {
 		if template.Template == "HTTPRequestCall" {
 			httpTemplate := HttpFunctionTemplate{
@@ -55,7 +55,7 @@ func ParseFunctionTemplate(funcs []*BaseFunctionTemplate) error {
 			if err != nil {
 				return err
 			}
-			DefaultFunctionHub.RegisterFunctions(entity)
+			serviceContext.DefaultFunctionHub.RegisterFunctions(entity)
 		}
 	}
 	return nil

@@ -10,6 +10,10 @@ type HttpFunction struct {
 	Option     *HttpFunctionTemplateOption
 }
 
+func (f *HttpFunction) GetDefinition() *FunctionDefinition {
+	return f.Definition
+}
+
 func (f *HttpFunction) GetName() string {
 	return f.Definition.Name
 }

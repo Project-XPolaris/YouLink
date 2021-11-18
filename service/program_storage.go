@@ -18,14 +18,14 @@ func SaveProgram(name string, body []map[string]interface{}) (*database.Program,
 	}
 	return program, nil
 }
-func CreateProcessInstance(id uint) (*Process, error) {
+func CreateProcessInstance(id uint, ctx ServiceContext) (*Process, error) {
 	var storeProgram database.Program
 	err := database.DefaultDatabasePlugin.DB.Find(&storeProgram, id).Error
 	if err != nil {
 		return nil, err
 	}
-	process := DefaultProcessManager.AllocateProcess()
-	program, err := CreateProgram(&storeProgram)
+	process := ctx.DefaultProcessManager.AllocateProcess()
+	program, err := CreateProgram(&storeProgram, ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -35,12 +35,12 @@ func CreateProcessInstance(id uint) (*Process, error) {
 	}
 	return process, err
 }
-func CreateProgram(storeProgram *database.Program) (*Program, error) {
+func CreateProgram(storeProgram *database.Program, ctx ServiceContext) (*Program, error) {
 	body, err := storeProgram.GetProgramBody()
 	if err != nil {
 		return nil, err
 	}
-	program, err := Parse(body)
+	program, err := Parse(body, ctx)
 	if err != nil {
 		return nil, err
 	}

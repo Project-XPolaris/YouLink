@@ -5,8 +5,6 @@ import (
 	"sync"
 )
 
-var DefaultLauncher = NewProgramLauncher()
-
 type ProgramLauncher struct {
 	sync.Mutex
 	Suspend []*Program
@@ -30,15 +28,15 @@ func (l *ProgramLauncher) RemoveSuspendProgram(id string) {
 	}
 	l.Suspend = newList
 }
-func (l *ProgramLauncher) Run(context context.Context) {
+func (l *ProgramLauncher) Run(context context.Context, serviceContext *ServiceContext) {
 	for {
 		select {
 		case program := <-l.Queue:
 			l.Suspend = append(l.Suspend, program)
 			go func() {
-				program.Run(DefaultRuntime)
+				program.Run(serviceContext.DefaultRuntime)
 				l.RemoveSuspendProgram(program.Id)
-				program.OnDone <- struct{}{}
+				close(program.OnDone)
 			}()
 		case <-context.Done():
 			return

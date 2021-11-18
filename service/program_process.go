@@ -6,7 +6,6 @@ import (
 	"sync"
 )
 
-var DefaultProcessManager = NewProcessManager()
 var (
 	ProcessStatusRunning  = "Running"
 	ProcessStatusEstimate = "Estimate"
@@ -76,11 +75,11 @@ func (p *Process) SetInput(variables []*Variable) error {
 	}
 	return nil
 }
-func (p *Process) Run() {
+func (p *Process) Run(ctx ServiceContext) {
 	p.Status = ProcessStatusRunning
 	go func() {
 		for _, program := range p.Programs {
-			err := program.Run(DefaultRuntime)
+			err := program.Run(ctx.DefaultRuntime)
 			if err != nil {
 				p.Status = ProcessStatusError
 				p.Err = err

@@ -6,8 +6,6 @@ import (
 	"sync"
 )
 
-var DefaultRuntime = NewRuntime()
-
 type ActiveSignal struct {
 	Id     string
 	Output []*Variable
@@ -15,33 +13,33 @@ type ActiveSignal struct {
 }
 type Runtime struct {
 	sync.Mutex
-	Queue            chan *Function
-	Current          *Function
-	Suspend          []*Function
+	Queue            chan Runner
+	Current          Runner
+	Suspend          []Runner
 	ActiveSignalChan chan *ActiveSignal
 }
 
 func NewRuntime() *Runtime {
 	return &Runtime{
-		Queue:            make(chan *Function, 1000),
+		Queue:            make(chan Runner, 1000),
 		ActiveSignalChan: make(chan *ActiveSignal, 1000),
-		Suspend:          []*Function{},
+		Suspend:          []Runner{},
 	}
 }
-func (r *Runtime) GetSuspendFunction(id string) *Function {
+func (r *Runtime) GetSuspendRunner(id string) Runner {
 	for _, function := range r.Suspend {
-		if id == function.Id {
+		if id == function.GetId() {
 			return function
 		}
 	}
 	return nil
 }
-func (r *Runtime) RemoveSuspendFunction(id string) *Function {
+func (r *Runtime) RemoveSuspendRunner(id string) Runner {
 	r.Lock()
 	defer r.Unlock()
-	newList := make([]*Function, 0)
+	newList := make([]Runner, 0)
 	for _, function := range r.Suspend {
-		if id != function.Id {
+		if id != function.GetId() {
 			newList = append(newList, function)
 		}
 	}
@@ -51,21 +49,55 @@ func (r *Runtime) RemoveSuspendFunction(id string) *Function {
 func (r *Runtime) Run(ctx context.Context) {
 	for {
 		select {
-		case function := <-r.Queue:
+		case runner := <-r.Queue:
 			r.Lock()
-			function.Id = xid.New().String()
-			r.Suspend = append(r.Suspend, function)
+			runner.SetId(xid.New().String())
+			r.Suspend = append(r.Suspend, runner)
 			r.Unlock()
 			go func() {
-				function.OnRun(function, r)
+				switch runner.(type) {
+				case *Function:
+					function := runner.(*Function)
+					err := function.OnRun(function, r)
+					if err != nil {
+						r.ActiveSignalChan <- &ActiveSignal{
+							Id:     function.Id,
+							Output: function.Outputs,
+							Error:  err,
+						}
+					}
+				case *Block:
+					block := runner.(*Block)
+					err := block.OnRun(block, r)
+					if err != nil {
+						r.ActiveSignalChan <- &ActiveSignal{
+							Id:     block.Id,
+							Output: block.Outputs,
+							Error:  err,
+						}
+					}
+				}
+
 			}()
 		case active := <-r.ActiveSignalChan:
-			function := r.GetSuspendFunction(active.Id)
-			if function.OnActive != nil {
-				function.OnActive(active, function, r)
+			runner := r.GetSuspendRunner(active.Id)
+			if active.Error != nil {
+				runner.SetError(active.Error)
 			}
-			r.RemoveSuspendFunction(active.Id)
-			function.OnDone <- struct{}{}
+			switch runner.(type) {
+			case *Function:
+				function := runner.(*Function)
+				if function.OnActive != nil {
+					function.OnActive(active, function, r)
+				}
+			case *Block:
+				block := runner.(*Block)
+				if block.OnActive != nil {
+					block.OnActive(active, block, r)
+				}
+			}
+			r.RemoveSuspendRunner(active.Id)
+			runner.Done()
 		case <-ctx.Done():
 			return
 		}

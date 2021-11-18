@@ -42,7 +42,7 @@ var newInstanceProgram haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
-	process, err := service.CreateProcessInstance(requestBody.Id)
+	process, err := service.CreateProcessInstance(requestBody.Id, service.DefaultServiceContext)
 	if err != nil {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
@@ -66,7 +66,7 @@ var runProcessHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusBadRequest)
 		return
 	}
-	process := service.DefaultProcessManager.GetProcessById(requestBody.Id)
+	process := service.DefaultServiceContext.DefaultProcessManager.GetProcessById(requestBody.Id)
 	if process == nil {
 		AbortError(context, errors.New("process not found"), http.StatusNotFound)
 		return
@@ -76,7 +76,7 @@ var runProcessHandler haruka.RequestHandler = func(context *haruka.Context) {
 		AbortError(context, err, http.StatusInternalServerError)
 		return
 	}
-	process.Run()
+	process.Run(service.DefaultServiceContext)
 	data := SerializerBaseProcessTemplate(process)
 	context.JSON(haruka.JSON{
 		"success": true,

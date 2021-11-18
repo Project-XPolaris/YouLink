@@ -17,7 +17,7 @@ var registerFunctionHandler haruka.RequestHandler = func(context *haruka.Context
 		AbortErrorWithStatus(err, context, http.StatusBadRequest)
 		return
 	}
-	err = service.ParseFunctionTemplate(requestBody.Func)
+	err = service.ParseFunctionTemplate(requestBody.Func, &service.DefaultServiceContext)
 	if err != nil {
 		AbortErrorWithStatus(err, context, http.StatusBadRequest)
 		return

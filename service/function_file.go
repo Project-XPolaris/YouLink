@@ -1,6 +1,8 @@
 package service
 
 import (
+	"errors"
+	"fmt"
 	"github.com/mitchellh/mapstructure"
 	"path/filepath"
 )
@@ -9,8 +11,35 @@ type BaseFunctionOption struct {
 	Inputs  []FunctionInput
 	Outputs []FunctionOutput
 }
+
+func (o *BaseFunctionOption) GetInputByName(name string) *FunctionInput {
+	for _, input := range o.Inputs {
+		if input.Name == name {
+			return &input
+		}
+	}
+	return nil
+}
+func (o *BaseFunctionOption) CheckValidate(entity FunctionEntity) error {
+	definition := entity.GetDefinition()
+	for _, variableDefinition := range definition.Input {
+		inputVar := o.GetInputByName(variableDefinition.Name)
+		if inputVar == nil {
+			return errors.New(fmt.Sprintf("invalidate function [%s] input:[%s] not found", definition.Name, variableDefinition.Name))
+		}
+	}
+	return nil
+}
+
+type BaseBlockOption struct {
+	Outputs []FunctionOutput
+}
 type UpdatePathDirFunction struct {
 	Definition *FunctionDefinition
+}
+
+func (f *UpdatePathDirFunction) GetDefinition() *FunctionDefinition {
+	return f.Definition
 }
 
 func NewUpdatePathDirFunction() *UpdatePathDirFunction {
@@ -47,30 +76,13 @@ func (f *UpdatePathDirFunction) ToFunction(m map[string]interface{}) (*Function,
 	function := &Function{
 		Name: "UpdateFileDir",
 		OnRun: func(function *Function, runtime *Runtime) error {
-			var sourceVar, targetVar *Variable
-			for _, input := range option.Inputs {
-				if input.Name == "source" {
-					if len(input.Ref) > 0 {
-						sourceVar = function.getInputByName(input.Ref)
-					} else {
-						sourceVar = &Variable{
-							Name:  "source",
-							Value: input.Value.(string),
-							Type:  "string",
-						}
-					}
-				}
-				if input.Name == "target" {
-					if len(input.Ref) > 0 {
-						targetVar = function.getInputByName("ref")
-					} else {
-						targetVar = &Variable{
-							Name:  "target",
-							Value: input.Value.(string),
-							Type:  "string",
-						}
-					}
-				}
+			sourceVar, err := ReadVariable(function, "source", "string", &option)
+			if err != nil {
+				return err
+			}
+			targetVar, err := ReadVariable(function, "target", "number", &option)
+			if err != nil {
+				return err
 			}
 			base := filepath.Base(sourceVar.Value.(string))
 			result := filepath.Join(targetVar.Value.(string), base)

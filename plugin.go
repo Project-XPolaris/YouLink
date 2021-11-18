@@ -10,8 +10,6 @@ type ApplicationInitPlugin struct {
 }
 
 func (p *ApplicationInitPlugin) OnInit(e *harukap.HarukaAppEngine) error {
-	go service.DefaultLauncher.Run(context.Background())
-	go service.DefaultRuntime.Run(context.Background())
-	service.RegisterDefaultFunction(service.DefaultFunctionHub)
+	service.DefaultServiceContext.Init(context.Background())
 	return nil
 }

@@ -4,10 +4,15 @@ import (
 	"sync"
 )
 
-var DefaultFunctionHub = NewFunctionHub()
-
 func RegisterDefaultFunction(hub *FunctionEntityHub) {
-	hub.RegisterFunctions(NewUpdatePathDirFunction())
+	hub.RegisterFunctions(
+		NewUpdatePathDirFunction(),
+		NewPlusFunctionEntity(),
+		NewSubtractFunctionEntity(),
+		NewMultiFunctionEntity(),
+		NewDivideFunctionEntity(),
+		NewConcatFunctionEntity(),
+	)
 }
 
 type VariableDefinition struct {
@@ -32,6 +37,7 @@ func (f *FunctionDefinition) GetOutputDefinitionByName(name string) *VariableDef
 type FunctionEntity interface {
 	GetName() string
 	ToFunction(m map[string]interface{}) (*Function, error)
+	GetDefinition() *FunctionDefinition
 }
 type FunctionEntityHub struct {
 	sync.Mutex

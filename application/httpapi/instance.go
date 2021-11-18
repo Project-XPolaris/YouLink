@@ -19,6 +19,7 @@ func GetEngine() *haruka.Engine {
 	e.Router.POST("/program/template", createProgramHandler)
 	e.Router.POST("/program/instance", newInstanceProgram)
 	e.Router.POST("/process/run", runProcessHandler)
+	e.Router.GET("/functions", functionListHandler)
 	e.Router.POST("/callback", outputCallbackHandler)
 	e.Router.POST("/register", registerFunctionHandler)
 	e.Router.AddHandler("/notification", notificationSocketHandler)

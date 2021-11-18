@@ -27,7 +27,7 @@ var outputCallbackHandler haruka.RequestHandler = func(context *haruka.Context) 
 	if len(requestBody.Error) > 0 {
 		activeSignal.Error = errors.New(requestBody.Error)
 	}
-	service.DefaultRuntime.ActiveSignalChan <- activeSignal
+	service.DefaultServiceContext.DefaultRuntime.ActiveSignalChan <- activeSignal
 	context.JSON(haruka.JSON{
 		"success": true,
 	})
